@@ -17,7 +17,7 @@ import (
 func resizer(buf []byte, o Options) ([]byte, error) {
 	defer C.vips_thread_shutdown()
 
-	image, imageType, err := loadImage(buf)
+	image, imageType, err := loadImageWithOptions(buf, o)
 	if err != nil {
 		return nil, err
 	}
@@ -125,11 +125,26 @@ func resizer(buf []byte, o Options) ([]byte, error) {
 }
 
 func loadImage(buf []byte) (*C.VipsImage, ImageType, error) {
+	return loadImageWithOptions(buf, Options{})
+	// if len(buf) == 0 {
+	// 	return nil, JPEG, errors.New("Image buffer is empty")
+	// }
+
+	// image, imageType, err := vipsRead(buf)
+	// if err != nil {
+	// 	return nil, JPEG, err
+	// }
+
+	// return image, imageType, nil
+}
+
+func loadImageWithOptions(buf []byte, o Options) (*C.VipsImage, ImageType, error) {
 	if len(buf) == 0 {
 		return nil, JPEG, errors.New("Image buffer is empty")
 	}
 
-	image, imageType, err := vipsRead(buf)
+	image, imageType, err := vipsReadWithOptions(buf, o)
+
 	if err != nil {
 		return nil, JPEG, err
 	}
@@ -408,7 +423,6 @@ func shrinkImage(image *C.VipsImage, o Options, residual float64, shrink int) (*
 func shrinkOnLoad(buf []byte, input *C.VipsImage, imageType ImageType, factor float64, shrink int) (*C.VipsImage, float64, error) {
 	var image *C.VipsImage
 	var err error
-
 	// Reload input using shrink-on-load
 	if imageType == JPEG && shrink >= 2 {
 		shrinkOnLoad := 1
